@@ -2,12 +2,12 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const _ = require('underscore'); // esta librería es parecida al "lodash"
 const Usuario = require('../models/usuario');
-const usuario = require('../models/usuario');
+const { verificaToken, verificaAdmin_Role } = require('../middlewares/autenticacion');
 
 const app = express();
 
-
-app.get('/usuario', function (req, res) {
+/* Listar los usuario */
+app.get('/usuario', verificaToken , (req, res) => {
 
     let desde = req.query.desde || 0;
     desde = Number(desde);
@@ -15,6 +15,7 @@ app.get('/usuario', function (req, res) {
     let limite = req.query.limite || 0;
     limite = Number(limite);
 
+    //Cadena de texto con lo campos que se quieren mostrar
     let mostrarCampos = 'nombre email password img role estado google';
 
     Usuario.find( { estado:true } , mostrarCampos)
@@ -28,7 +29,7 @@ app.get('/usuario', function (req, res) {
                     });
                 }
 
-                Usuario.count( { estado: true }, ( err, conteo ) => {
+                Usuario.countDocuments( { estado: true }, ( err, conteo ) => {
                     res.status(200).json({
                         ok: true,
                         usuarios,
@@ -39,7 +40,8 @@ app.get('/usuario', function (req, res) {
 
 });
 
-app.post('/usuario', function (req, res) {
+/* Crear los usuarios */
+app.post('/usuario', [verificaToken, verificaAdmin_Role], function (req, res) {
     let body = req.body; //--> Se necesita implementar el body-parser
 
     let usuario = new Usuario({
@@ -69,8 +71,8 @@ app.post('/usuario', function (req, res) {
 });
 
 
-/* Actualizar los registros */
-app.put('/usuario/:id', function (req, res) {
+/* Actualizar los usuarios */
+app.put('/usuario/:id', [verificaToken, verificaAdmin_Role], function (req, res) {
 
     let id = req.params.id; //--> lo que llega por el query string
 
@@ -100,7 +102,8 @@ app.put('/usuario/:id', function (req, res) {
     });
 });
 
-app.delete('/usuario/:id', function (req, res) {
+/* Eliminar los usuarios */
+app.delete('/usuario/:id', [verificaToken, verificaAdmin_Role], function (req, res) {
 
     let id = req.params.id;
 
